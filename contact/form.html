@@ -214,20 +214,11 @@ s0.parentNode.insertBefore(s1,s0);
     </div>
 <!--サイトシール-->
 <div style="display: flex;justify-content: center;align-items: center;">
-        <a href="https://secure.haruharutv.jp/pkiseal.php" oncontextmenu="return false;">
-            <div id="itp_ss" style="display: inline-block;margin-right:10px;">
-            <script src="https://secure.haruharutv.jp/ss_img_touka.min.js"></script>
-            <noscript><img src="https://secure.haruharutv.jp/ss_ns.png" style="height:80px;"></noscript>
-            </div>
-        </a>
-<script type="text/javascript"> //<![CDATA[
-  var tlJsHost = ((window.location.protocol == "https:") ? "https://secure.trust-provider.com/" : "http://www.trustlogo.com/");
-  document.write(unescape("%3Cscript src='" + tlJsHost + "trustlogo/javascript/trustlogo.js' type='text/javascript'%3E%3C/script%3E"));
-//]]></script>
-<script language="JavaScript" type="text/javascript">
-  TrustLogo("https://www.sectigo.com/images/seals/sectigo_trust_seal_sm_2x.png", "SECDV", "none");
-</script>
-
+<form action="https://sitesealinfo.pubcert.jprs.jp/SiteSealReference" name="SiteSealReference" method="post" target="_blank">
+  <input type="image" name="Sticker" src="/jprs_siteseal_140x59_DV.png" alt="クリックして証明書の内容をご確認ください。" oncontextmenu="return false;" />
+  <input type="hidden" name="certificateCn" value="haruharutv.jp" />
+  <input type="hidden" name="certificateClass" value="DV" />
+</form>
 </div>
     <div id="cpl"></div>
   </div>
