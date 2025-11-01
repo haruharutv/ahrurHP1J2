@@ -71,18 +71,19 @@ s0.parentNode.insertBefore(s1,s0);
       <label for="namebox">お名前</label><br>
       <input id="namebox" style="border-radius:10px;border:2px gray solid;font-size:16px;padding:5px;">
       <br>
-      <label for="mailbox">メール iデフォルトでは「はるはるメール」のアドレスです<a href="https://haruharutv.jp/service/haruharumail.html"
-          style="color:gray;font-size:small;text-decoration:none;">はるはるメールについて</a></label><br>
+      <label for="mailbox">メール<!-- iデフォルトでは「はるはるメール」のアドレスです<a href="https://haruharutv.jp/service/haruharumail.html"
+          style="color:gray;font-size:small;text-decoration:none;">はるはるメールについて</a>--></label><br>
       <input id="mailbox" style="border-radius:10px;border:2px gray solid;font-size:16px;padding:5px;">
       <br>
       <script>
-
+/*
         document.getElementById("mailbox").value = localStorage.getItem("h-mail");
         //ID指定
         if (localStorage.getItem("usemail")) {
           document.getElementById("mailbox").setAttribute("readonly", "true");
           document.getElementById("mailbox").style.backgroundColor = "gray";
         }
+        */
       </script>
       <br>
       <style>
@@ -211,6 +212,23 @@ s0.parentNode.insertBefore(s1,s0);
         </p>
       </div>
     </div>
+<!--サイトシール-->
+<div style="display: flex;justify-content: center;align-items: center;">
+        <a href="https://secure.haruharutv.jp/pkiseal.php" oncontextmenu="return false;">
+            <div id="itp_ss" style="display: inline-block;margin-right:10px;">
+            <script src="https://secure.haruharutv.jp/ss_img_touka.min.js"></script>
+            <noscript><img src="https://secure.haruharutv.jp/ss_ns.png" style="height:80px;"></noscript>
+            </div>
+        </a>
+<script type="text/javascript"> //<![CDATA[
+  var tlJsHost = ((window.location.protocol == "https:") ? "https://secure.trust-provider.com/" : "http://www.trustlogo.com/");
+  document.write(unescape("%3Cscript src='" + tlJsHost + "trustlogo/javascript/trustlogo.js' type='text/javascript'%3E%3C/script%3E"));
+//]]></script>
+<script language="JavaScript" type="text/javascript">
+  TrustLogo("https://www.sectigo.com/images/seals/sectigo_trust_seal_sm_2x.png", "SECDV", "none");
+</script>
+
+</div>
     <div id="cpl"></div>
   </div>
   <script>var cplc = document.getElementById("cpl"); cplc.style.userSelect = "none"; cplc.innerHTML = "&copy;" + new Date().getFullYear() + " HARUHARU TELEVISION GROUP., GR. & Haruharu Television Japan."; cplc.style.textAlign = "center"; cplc.style.fontSize = "15px";</script>
@@ -236,13 +254,13 @@ s0.parentNode.insertBefore(s1,s0);
 
     .fade {
       opacity: 0;
-      transform: translateY(30px);
+      transform: scale(1.5);
       transition: opacity 1.5s, transform 1s;
     }
 
     .fade.active {
       opacity: 1;
-      transform: translateY(0px);
+      transform: scale(1);
     }
 
     .g1 {
@@ -397,5 +415,6 @@ s0.parentNode.insertBefore(s1,s0);
     }
   </script>
 </body>
+
 
 </html>
