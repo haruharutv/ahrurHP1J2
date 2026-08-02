@@ -1,48 +1,31 @@
-name: Recommit All Files with Standard Message
+name: Create Empty Commit
 
 on:
-  workflow_dispatch: # Actionsタブから手動で実行できるように指定
+  workflow_dispatch:
+
+permissions:
+  contents: write
 
 jobs:
-  recommit:
+  empty-commit:
     runs-on: ubuntu-latest
+
     steps:
-      - name: Checkout repository
+      - name: Checkout
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0 # 最終変更日（コミット日時）を取得するために全履歴を取得
+          fetch-depth: 0
+          ref: main
 
-      - name: Configure Git User
+      - name: Configure Git
         run: |
           git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
 
-      - name: Recommit each file
+      - name: Create empty commit
         run: |
-          # 追跡対象の全ファイルを1つずつループ処理
-          git ls-files | while read -r file; do
-            # ディレクトリの存在チェック（念のため）
-            if [ -f "$file" ]; me
-              # 拡張子なしのファイル名を取得
-              filename=$(basename "$file")
-              name_without_ext="${filename%.*}"
+          DATE=$(date +'%Y-%m-%d')
+          git commit --allow-empty -m "All Files ${DATE} Edited"
 
-              # そのファイルの最終変更日（YYYY-MM-DD形式）を取得
-              last_date=$(git log -1 --format="%cd" --date=format:"%Y-%m-%d" -- "$file")
-
-              # 最終変更日が取得できなかった場合のフォールバック（今日の日付）
-              if [ -z "$last_date" ]; then
-                last_date=$(date +"%Y-%m-%d")
-              fi
-
-              # コミットメッセージの作成
-              commit_message="${name_without_ext} ${last_date} Edited"
-
-              # 空コミット（ファイル内容変更なし）を作成してメッセージを付与
-              git commit --allow-empty -m "$commit_message" -- "$file"
-            fi
-          done
-
-      - name: Push changes
-        run: |
-          git push origin HEAD:${{ github.ref_name }}
+      - name: Push
+        run: git push origin main
