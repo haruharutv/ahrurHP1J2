@@ -1,4 +1,4 @@
-
+​
     // Based off of https://github.com/pwa-builder/PWABuilder/blob/main/docs/sw.js
 
     /*
