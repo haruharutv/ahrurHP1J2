@@ -1,4 +1,4 @@
-setTimeout(generate, 1000);
+​setTimeout(generate, 1000);
 
 function generate() {
   var dlbtn = document.getElementById("dlbtn");
