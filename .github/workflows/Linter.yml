@@ -1,4 +1,4 @@
-name: Create Empty Commit
+name: Recommit All Files
 
 on:
   workflow_dispatch:
@@ -7,12 +7,11 @@ permissions:
   contents: write
 
 jobs:
-  empty-commit:
+  recommit:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
         with:
           fetch-depth: 0
           ref: main
@@ -22,10 +21,42 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
 
-      - name: Create empty commit
+      - name: Recommit files
+        shell: bash
         run: |
-          DATE=$(date +'%Y-%m-%d')
-          git commit --allow-empty -m "All Files ${DATE} Edited"
+
+          while IFS= read -r -d '' file
+          do
+
+            case "$file" in
+              .git/*|.github/workflows/*)
+                continue
+                ;;
+            esac
+
+            name=$(basename "$file")
+            base="${name%.*}"
+            date=$(git log -1 --format=%cs -- "$file")
+
+            if [ -z "$date" ]; then
+              date=$(date +%F)
+            fi
+
+            if git diff --no-index --quiet "$file" <(cat "$file") 2>/dev/null; then
+                if grep -Iq . "$file" 2>/dev/null; then
+                    printf '\u200B' | cat - "$file" > "$file.tmp"
+                    mv "$file.tmp" "$file"
+
+                    git add "$file"
+                    git commit -m "$base $date Edited"
+                else
+                    git commit --allow-empty -m "$base $date Edited"
+                fi
+            else
+                git commit --allow-empty -m "$base $date Edited"
+            fi
+
+          done < <(find . -type f -not -path "./.git/*" -print0)
 
       - name: Push
         run: git push origin main
