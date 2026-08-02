@@ -1,148 +1,48 @@
-name: Cleanup Commit Messages
+name: Recommit All Files with Standard Message
 
 on:
-  workflow_dispatch:
-    inputs:
-      start_commit:
-        description: 'Start commit SHA (from this point onwards, or leave empty for all)'
-        required: false
-        type: string
+  workflow_dispatch: # Actionsタブから手動で実行できるように指定
 
 jobs:
-  cleanup-commits:
+  recommit:
     runs-on: ubuntu-latest
-    permissions:
-      contents: write
-    
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0
+          fetch-depth: 0 # 最終変更日（コミット日時）を取得するために全履歴を取得
 
-      - name: Setup Git
+      - name: Configure Git User
         run: |
-          git config --global user.name "GitHub Actions"
-          git config --global user.email "actions@github.com"
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
 
-      - name: Generate commit message mapping
-        id: mapping
+      - name: Recommit each file
         run: |
-          python3 << 'EOF'
-          import subprocess
-          import json
-          from pathlib import Path
-          from datetime import datetime
-          
-          # Get all commits
-          result = subprocess.run(
-              ['git', 'log', '--pretty=format:%H|%ai|%s'],
-              capture_output=True,
-              text=True
-          )
-          
-          commits = result.stdout.strip().split('\n')
-          mapping = {}
-          
-          for line in commits:
-              if not line.strip():
-                  continue
-              parts = line.split('|')
-              commit_sha = parts[0]
-              date_str = parts[1].split(' ')[0]  # YYYY-MM-DD
-              message = parts[2] if len(parts) > 2 else "Initial commit"
-              
-              # Get changed files in this commit
-              files_result = subprocess.run(
-                  ['git', 'show', '--pretty=', '--name-only', commit_sha],
-                  capture_output=True,
-                  text=True
-              )
-              
-              changed_files = [f for f in files_result.stdout.strip().split('\n') if f.strip()]
-              
-              # Generate new message from files
-              file_names = []
-              for file_path in changed_files:
-                  # Get filename without extension
-                  name_only = Path(file_path).stem
-                  if name_only:
-                      file_names.append(name_only)
-              
-              if file_names:
-                  unique_files = list(set(file_names))[:3]  # Limit to 3 files
-                  new_message = f"{', '.join(unique_files)} ({date_str}) Edited"
-              else:
-                  new_message = f"({date_str}) Edited"
-              
-              mapping[commit_sha] = new_message
-          
-          # Save to file for next step
-          with open('commit_mapping.json', 'w') as f:
-              json.dump(mapping, f)
-          
-          print(f"Generated mapping for {len(mapping)} commits")
-          EOF
+          # 追跡対象の全ファイルを1つずつループ処理
+          git ls-files | while read -r file; do
+            # ディレクトリの存在チェック（念のため）
+            if [ -f "$file" ]; me
+              # 拡張子なしのファイル名を取得
+              filename=$(basename "$file")
+              name_without_ext="${filename%.*}"
 
-      - name: Apply commit message changes
-        run: |
-          python3 << 'EOF'
-          import subprocess
-          import json
-          import os
-          
-          with open('commit_mapping.json', 'r') as f:
-              mapping = json.load(f)
-          
-          if not mapping:
-              print("No commits to process")
-              exit(0)
-          
-          commits_list = list(mapping.keys())
-          print(f"Processing {len(commits_list)} commits...")
-          
-          # Get the initial commit SHA
-          initial_result = subprocess.run(
-              ['git', 'rev-list', '--max-parents=0', 'HEAD'],
-              capture_output=True,
-              text=True
-          )
-          initial_commit = initial_result.stdout.strip()
-          
-          # Create git filter-branch command for rewriting commit messages
-          try:
-              env = os.environ.copy()
-              env['GIT_SEQUENCE_EDITOR'] = ':'
-              
-              # Use git filter-branch to rewrite all commits
-              subprocess.run(
-                  ['git', 'filter-branch', '--msg-filter', 
-                   f'''python3 -c "import sys, json; m=json.load(open('commit_mapping.json')); \
-                    sha=open('/dev/stdin').read().strip(); \
-                    print(m.get(sha, sha))" ''',
-                   '--', '--all'],
-                  check=False,
-                  env=env
-              )
-          except Exception as e:
-              print(f"Warning: {e}")
-          
-          EOF
+              # そのファイルの最終変更日（YYYY-MM-DD形式）を取得
+              last_date=$(git log -1 --format="%cd" --date=format:"%Y-%m-%d" -- "$file")
 
-      - name: Force push to main branch
-        run: |
-          # Remove backup refs from filter-branch
-          git update-ref -d refs/original/refs/heads/main 2>/dev/null || true
-          git push origin main --force-with-lease
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+              # 最終変更日が取得できなかった場合のフォールバック（今日の日付）
+              if [ -z "$last_date" ]; then
+                last_date=$(date +"%Y-%m-%d")
+              fi
 
-      - name: Create summary
+              # コミットメッセージの作成
+              commit_message="${name_without_ext} ${last_date} Edited"
+
+              # 空コミット（ファイル内容変更なし）を作成してメッセージを付与
+              git commit --allow-empty -m "$commit_message" -- "$file"
+            fi
+          done
+
+      - name: Push changes
         run: |
-          echo "## Commit Message Cleanup Complete ✅" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "All commit messages have been updated to the format:" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "\`[filename(s) + date] Edited\`" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "例: \`index (2025-11-13) Edited\`" >> $GITHUB_STEP_SUMMARY
+          git push origin HEAD:${{ github.ref_name }}
