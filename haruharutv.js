@@ -1,4 +1,4 @@
-
+​
 var newScript = document.createElement("script");
 newScript.src = "https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js";
 document.body.appendChild(newScript);
