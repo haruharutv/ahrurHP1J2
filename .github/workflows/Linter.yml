@@ -11,7 +11,8 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout
+        uses: actions/checkout@v4
         with:
           fetch-depth: 0
           ref: main
@@ -24,39 +25,38 @@ jobs:
       - name: Recommit files
         shell: bash
         run: |
-
+          find . -type f \
+            -not -path "./.git/*" \
+            -not -path "./.github/workflows/*" \
+            -print0 |
           while IFS= read -r -d '' file
           do
+            rel="${file#./}"
 
-            case "$file" in
-              .git/*|.github/workflows/*)
-                continue
-                ;;
-            esac
-
-            name=$(basename "$file")
+            name=$(basename "$rel")
             base="${name%.*}"
-            date=$(git log -1 --format=%cs -- "$file")
 
-            if [ -z "$date" ]; then
-              date=$(date +%F)
-            fi
+            last_date=$(git log -1 --format=%cs -- "$rel")
+            [ -z "$last_date" ] && last_date=$(date +%F)
 
-            if git diff --no-index --quiet "$file" <(cat "$file") 2>/dev/null; then
-                if grep -Iq . "$file" 2>/dev/null; then
-                    printf '\u200B' | cat - "$file" > "$file.tmp"
-                    mv "$file.tmp" "$file"
+            # テキストファイルなら先頭にU+200Bを付与
+            if grep -Iq . "$rel" 2>/dev/null; then
+              printf '\u200B' | cat - "$rel" > "$rel.tmp"
+              mv "$rel.tmp" "$rel"
 
-                    git add "$file"
-                    git commit -m "$base $date Edited"
-                else
-                    git commit --allow-empty -m "$base $date Edited"
-                fi
+              git add "$rel"
+
+              # 実際に変更があった場合のみ通常コミット
+              if ! git diff --cached --quiet; then
+                git commit -m "$base $last_date Edited"
+              else
+                git commit --allow-empty -m "$base $last_date Edited"
+              fi
             else
-                git commit --allow-empty -m "$base $date Edited"
+              # バイナリは空コミット
+              git commit --allow-empty -m "$base $last_date Edited"
             fi
-
-          done < <(find . -type f -not -path "./.git/*" -print0)
+          done
 
       - name: Push
         run: git push origin main
